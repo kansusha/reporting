@@ -11,6 +11,8 @@ import {
   useActionQuery,
 } from "@agent-native/core/client/hooks";
 import { buildSettingsRoute } from "@agent-native/core/client/navigation";
+import { signOut } from "@agent-native/core/client/sign-out";
+import { useSession } from "@agent-native/core/client/use-session";
 
 import { APP_TITLE } from "@/lib/app-config";
 import { MonthlyTrackingSection } from "@/components/MonthlyTrackingSection";
@@ -71,6 +73,41 @@ function BrandMark() {
   );
 }
 
+function LogoutButton({ className = "" }: { className?: string }) {
+  const [signingOut, setSigningOut] = useState(false);
+  return (
+    <button
+      type="button"
+      className={`secondary-button ${className}`}
+      disabled={signingOut}
+      onClick={() => {
+        setSigningOut(true);
+        void signOut();
+      }}
+    >
+      {signingOut ? "Signing out…" : "Log out"}
+    </button>
+  );
+}
+
+function AccountRow() {
+  const { session } = useSession();
+  return (
+    <div className="mt-3 flex items-center justify-between gap-2 border-t border-sidebar-border px-1 pt-3">
+      <div className="min-w-0">
+        <div className="text-[10px] text-muted-foreground">Signed in as</div>
+        <div
+          className="truncate text-[11px] font-medium text-foreground"
+          title={session?.email}
+        >
+          {session?.email ?? "—"}
+        </div>
+      </div>
+      <LogoutButton className="shrink-0" />
+    </div>
+  );
+}
+
 function Sidebar({
   page,
   onNavigate,
@@ -88,7 +125,10 @@ function Sidebar({
 }) {
   return (
     <aside className="flex w-full shrink-0 flex-col border-b border-sidebar-border bg-sidebar md:min-h-screen md:w-[224px] md:border-b-0 md:border-r">
-      <BrandMark />
+      <div className="flex items-center justify-between">
+        <BrandMark />
+        <LogoutButton className="mr-3 md:hidden" />
+      </div>
       <div className="flex gap-1 px-3 pb-3 md:flex-col md:pb-0">
         <button
           className={`nav-item ${page === "reports" && currentView !== "monthly" && currentView !== "quarterly" ? "nav-item-active" : ""}`}
@@ -171,9 +211,7 @@ function Sidebar({
             </button>
           )}
         </div>
-        <div className="mt-4 border-t border-sidebar-border px-2 pt-4 text-[10px] text-muted-foreground">
-          SPRINT REPORTING
-        </div>
+        <AccountRow />
       </div>
     </aside>
   );
