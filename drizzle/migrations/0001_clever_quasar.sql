@@ -1,0 +1,1 @@
+ALTER TABLE "jira_sprints" ADD COLUMN "role" text DEFAULT 'current' NOT NULL;

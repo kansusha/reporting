@@ -1,0 +1,1 @@
+ALTER TABLE "jira_issues" ADD COLUMN "assignee_active" boolean;
