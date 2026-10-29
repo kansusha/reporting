@@ -1,11 +1,28 @@
 import { agentNative } from "@agent-native/core/vite";
 import { reactRouter } from "@react-router/dev/vite";
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 
 const reactRouterPlugins = reactRouter as unknown as () => any[];
 const agentNativePlugins = agentNative as unknown as (
   options?: Parameters<typeof agentNative>[0],
 ) => any[];
+
+const stripMissingSourcemaps = (): Plugin => ({
+  name: "strip-missing-sourcemaps",
+  enforce: "pre",
+  transform(code, id) {
+    if (
+      id.includes("/@agent-native/agentkit/dist/protocol/") &&
+      code.includes("//# sourceMappingURL=")
+    ) {
+      return {
+        code: code.replace(/\n?\/\/# sourceMappingURL=[^\n]*/g, ""),
+        map: null,
+      };
+    }
+    return null;
+  },
+});
 export default defineConfig({
   server: {
     hmr: {
@@ -13,6 +30,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    include: ["secure-json-parse"],
     entries: [
       "app/entry.client.tsx",
       "app/root.tsx",
@@ -22,6 +40,7 @@ export default defineConfig({
     ],
   },
   plugins: [
+    stripMissingSourcemaps(),
     ...reactRouterPlugins(),
     ...agentNativePlugins({
       ssrStubs: ["shiki"],
