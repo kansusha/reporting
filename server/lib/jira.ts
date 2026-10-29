@@ -136,7 +136,7 @@ async function readJiraCredentials(): Promise<JiraCredentials | null> {
   return {
     baseUrl: baseUrl.value.trim().replace(/\/+$/, ""),
     email: accountEmail.value.trim(),
-    apiToken: apiToken.value,
+    apiToken: apiToken.value.trim(),
   };
 }
 
@@ -186,6 +186,13 @@ export async function jiraRequest<T = unknown>(
       Accept: "application/json",
     },
   });
+
+  if (response.status === 401) {
+    fail(
+      `Jira rejected your credentials for ${creds.baseUrl}. In Settings → API keys, check that "Jira account email" is the Atlassian login that created the API token, and that the token is a classic one (Create API token, not "with scopes") and hasn't been revoked.`,
+      { errorCode: "jira_unauthorized", statusCode: 401 },
+    );
+  }
 
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
