@@ -1,5 +1,19 @@
-import { createAuthPlugin } from "@agent-native/core/server";
+import { createAuthPlugin, type AuthOptions } from "@agent-native/core/server";
 import { signInJourneyInlineScript } from "@agent-native/core/shared";
+
+type BetterAuthPlugin = NonNullable<
+  NonNullable<AuthOptions["betterAuth"]>["plugins"]
+>[number];
+
+// Signup runs in a DB transaction; auto sign-in creates the session inside it, and
+// the session hook then waits on the same 1-connection serverless pool → deadlock.
+// The login page signs in with a separate /login call instead.
+const signupWithoutSession: BetterAuthPlugin = {
+  id: "sprintline-signup-without-session",
+  init: () => ({
+    options: { emailAndPassword: { enabled: true, autoSignIn: false } },
+  }),
+};
 
 const loginHtml = `<!doctype html>
 <html lang="en">
@@ -644,10 +658,7 @@ const loginHtml = `<!doctype html>
               }
               setLoading(forms.signup, false);
               showAlert(
-                errorFrom(
-                  loginResult,
-                  "Account created, but we couldn't sign you in. Try signing in.",
-                ),
+                "We couldn't sign you in. If you already have an account with this email, use Sign in.",
               );
             });
           });
@@ -664,4 +675,5 @@ export default createAuthPlugin({
   rootAuth: false, // auth is not serverd on / by default
   workspaceAppPublicPaths: ["/debug-auth"],
   loginHtml,
+  betterAuth: { plugins: [signupWithoutSession] },
 });
