@@ -13,4 +13,11 @@ export default defineAppConfig({
     name: "Sprintline",
     homePath: "/",
   },
+  auth: {
+    // Accept email+password signup without sending a verification email.
+    // Without this, hosted deployments without an email provider refuse
+    // signup entirely (disableSignUp=true), surfacing the generic
+    // "We couldn't create your account right now" fallback.
+    requireEmailVerification: false,
+  },
 });
